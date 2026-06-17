@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>超時值班費計算說明系統</title>
+<!-- 引入 Tailwind CSS 實現精美 RWD 佈局 -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- 引入 Lucide 圖標提升科技感視覺 -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    cyber: {
+                        bg: '#050a15',
+                        card: 'rgba(11, 20, 38, 0.8)',
+                        border: 'rgba(51, 65, 85, 0.4)',
+                        blue: '#00f0ff',
+                        purple: '#bd00ff',
+                        green: '#39ff14',
+                        yellow: '#ffd700',
+                        red: '#ff0055'
+                    }
+                }
+            }
+        }
+    }
+</script>
+
+<style>
+    body {
+        background-color: #030712;
+        background-image: 
+            radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 90% 90%, rgba(189, 0, 255, 0.05) 0%, transparent 50%);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft JhengHei", sans-serif;
+    }
+
+    /* 自訂捲動條，確保手機版滑動表格時美觀 */
+    .no-scrollbar::-webkit-scrollbar {
+        height: 6px;
+    }
+    .no-scrollbar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.02);
+    }
+    .no-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(0, 240, 255, 0.3);
+        border-radius: 3px;
+    }
+    .no-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 240, 255, 0.6);
+    }
+
+    /* 點擊高亮特效 */
+    .cell-highlight {
+        background: rgba(0, 240, 255, 0.15) !important;
+        border: 1px solid #00f0ff !important;
+        color: #00f0ff !important;
+        text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+    }
+</style>
+</head>
+<body class="text-slate-100 min-h-screen pb-16">
+
+    <!-- 前置進入確認頁面 (Overlay) -->
+    <div id="welcome-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md px-4 transition-opacity duration-500">
+        <!-- 階段一：初版清冊公告 -->
+        <div id="overlay-step-1" class="max-w-md w-full bg-slate-900/90 border border-cyber-blue/30 p-6 md:p-8 rounded-2xl shadow-2xl text-center relative overflow-hidden">
+            <!-- 背景流光效果 -->
+            <div class="absolute -top-12 -left-12 w-24 h-24 bg-cyber-blue/15 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-12 -right-12 w-24 h-24 bg-cyber-purple/15 rounded-full blur-2xl"></div>
+
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyber-blue/10 border border-cyber-blue/30 text-cyber-blue mb-4">
+                <i data-lucide="bell" class="w-8 h-8"></i>
+            </div>
+            
+            <h2 class="text-xl md:text-2xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyber-blue to-[#4d76ff] mb-4">
+                【超時值班費清冊】公告
+            </h2>
+            
+            <div class="text-sm text-slate-200 leading-relaxed mb-6 text-left space-y-4 font-medium border-l-2 border-cyber-blue pl-4">
+                <p>每月 20 號會做初版【超時值班費清冊】放在10樓SP旁</p>
+                <p>請同仁於次月 1 號前審閱並簽名</p>
+            </div>
+            
+            <button onclick="goToStep2()" class="w-full py-3 bg-gradient-to-r from-cyber-blue to-[#4d76ff] text-slate-950 font-black rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.4)] hover:shadow-[0_0_25px_rgba(0,240,255,0.7)] hover:text-white transition-all duration-300 transform active:scale-95 text-sm tracking-widest">
+                已了解
+            </button>
+        </div>
+
+        <!-- 階段二：簽名協助確認事項 -->
+        <div id="overlay-step-2" class="hidden max-w-lg w-full bg-slate-900/95 border border-cyber-purple/40 p-6 md:p-8 rounded-2xl shadow-2xl relative overflow-hidden">
+            <!-- 背景流光效果 -->
+            <div class="absolute -top-12 -right-12 w-24 h-24 bg-cyber-purple/15 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-12 -left-12 w-24 h-24 bg-cyber-green/10 rounded-full blur-2xl"></div>
+
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-cyber-purple/10 border border-cyber-purple/30 text-cyber-purple mb-4">
+                <i data-lucide="clipboard-check" class="w-6 h-6"></i>
+            </div>
+            
+            <h2 class="text-lg md:text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple to-cyber-blue mb-4">
+                請同仁簽加值班費清冊時協助確認
+            </h2>
+            
+            <!-- 條列項目 -->
+            <div class="text-xs md:text-sm text-slate-200 space-y-2 mb-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                <div class="flex items-center gap-2">
+                    <span class="text-emerald-400 font-bold">✅</span>
+                    <span class="font-bold text-slate-300">公假／請假</span>
+                    <span class="text-slate-400">已完成申請</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-emerald-400 font-bold">✅</span>
+                    <span class="font-bold text-slate-300">轉補休公假單</span>
+                    <span class="text-slate-400">已送紙本給Kem</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-emerald-400 font-bold">✅</span>
+                    <span class="font-bold text-slate-300">差旅費報告表</span>
+                    <span class="text-slate-400">已送紙本給Kem</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-emerald-400 font-bold">✅</span>
+                    <span class="font-bold text-slate-300">差勤調代班</span>
+                    <span class="text-slate-400">雙方已簽核完成</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-emerald-400 font-bold">✅</span>
+                    <span class="font-bold text-slate-300">差勤異常</span>
+                    <span class="text-slate-400">已處理</span>
+                </div>
+            </div>
+
+            <!-- 法規與提醒文字 -->
+            <div class="text-[11px] md:text-xs text-slate-300 leading-relaxed space-y-2.5 mb-6">
+                <p class="border-l-2 border-amber-500 pl-3 bg-amber-500/5 py-1 text-amber-300">
+                    加值班費清算作業需待全體同仁的公假、調換班及差勤異常案件均完成後，方能進行結算。若於次月1日後才處理上列事項，將影響整體加值班費發放時程。
+                </p>
+                <p class="text-slate-400 text-center font-semibold">
+                    敬請各位同仁配合於期限前完成相關程序，讓加值班費能儘早完成核發，謝謝大家的協助。
+                </p>
+            </div>
+            
+            <button onclick="dismissOverlay()" class="w-full py-3 bg-gradient-to-r from-cyber-purple via-[#4d76ff] to-cyber-blue text-slate-950 font-black rounded-xl shadow-[0_0_15px_rgba(189,0,255,0.4)] hover:shadow-[0_0_25px_rgba(0,240,255,0.7)] hover:text-white transition-all duration-300 transform active:scale-95 text-xs md:text-sm tracking-widest uppercase">
+                我都確認過了！
+            </button>
+        </div>
+    </div>
+
+    <!-- 主內容區 -->
+    <div class="max-w-7xl mx-auto px-4 pt-6">
+        <!-- 頂部 Header -->
+        <header class="text-center mb-8">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyber-blue/30 bg-cyber-blue/10 text-cyber-blue text-xs font-bold tracking-wider mb-4">
+                <i data-lucide="shield" class="w-3.5 h-3.5"></i> 民用航空局飛航服務總臺 臺北機場管制臺 專用版 2026.06月製
+            </div>
+            <!-- 標題漸層色修改為亮青藍到飽和靛紫色 -->
+            <h1 class="text-2xl md:text-4xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00f0ff] via-[#4d76ff] to-[#bd00ff] drop-shadow-[0_0_25px_rgba(0,240,255,0.25)]">
+                超時值班費計算說明
+            </h1>
+            <p class="text-slate-400 mt-2 text-xs md:text-sm">
+                點選下方清冊各欄位，系統將於下方動態剖析「公務申報公式」與「實務計算範例」
+            </p>
+
+            <!-- 業務邏輯與規則提示卡片 -->
+            <div class="mt-4 max-w-xl mx-auto p-4 rounded-xl border border-cyber-blue/20 bg-slate-900/60 text-left text-xs md:text-sm text-slate-300 leading-relaxed space-y-2 shadow-inner">
+                <div class="flex items-start gap-2">
+                    <span class="text-cyber-blue font-bold">▪</span>
+                    <p>清冊中任何餘數 → 無條件捨去</p>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-cyber-blue font-bold">▪</span>
+                    <p>每個月值班達規定時數 162小時 → 領基本薪資</p>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-cyber-blue font-bold">▪</span>
+                    <p>超過 162小時，依超時時數＊時薪發給加班費</p>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-cyber-blue font-bold">▪</span>
+                    <p>如果值班合計時數已超過162， 公假（內扣）、請假時數都會被忽略。請將公假（內扣）轉補休辦理。</p>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-cyber-blue font-bold">▪</span>
+                    <p>區域一＋區域二＝應領總計</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- 值班費模擬清冊表格區 -->
+        <div class="bg-cyber-card border border-cyber-border rounded-2xl p-4 md:p-6 backdrop-blur-xl shadow-2xl mb-6 overflow-hidden">
+            
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-cyber-blue animate-pulse"></span>
+                    <h2 class="text-base font-bold text-white tracking-wider">值班費核算清冊（範例資料）</h2>
+                </div>
+                <span class="text-[11px] text-slate-400 flex items-center gap-1 bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
+                    <i data-lucide="touch-app" class="w-3.5 h-3.5 text-cyber-blue"></i> 點擊任意儲存格查看公式
+                </span>
+            </div>
+
+            <!-- 情境說明與計算結果區 -->
+            <div class="mt-4 p-5 rounded-xl border border-slate-800 bg-slate-950/80 text-xs md:text-sm text-slate-300 space-y-4 mb-6">
+                <div>
+                    <h3 class="text-sm font-bold text-cyber-blue flex items-center gap-1.5 border-b border-slate-800/80 pb-2 mb-2">
+                        <i data-lucide="info" class="w-4 h-4"></i> 情境說明
+                    </h3>
+                    <div class="space-y-1 leading-relaxed font-medium">
+                        <p>于晏本月班表排定 185 小時。</p>
+                        <p>本月發生以下情況：</p>
+                        <p>▪ 因身體不適臨時請假 8 小時（輪值內扣）。</p>
+                        <p>▪ 參加航管作業檢討會 3 小時（公假併計）。</p>
+                        <p>▪ 至航醫中心體檢 4 小時（公假內扣）。</p>
+                        <p>▪ 月底值夜班 13 小時，其中 8 小時跨至次月（本月跨月）。</p>
+                        <p>▪ 上月底亦有夜班跨至本月 8 小時（上月跨月）。</p>
+                        <p>▪ 另因上月扣除跨月時數後，總工時未達基本時數 162 小時，因此已預先借用上月跨月時數 5 小時補足. 故本月計算超時值班費時，須扣除該 5 小時借用時數（補扣上月跨本月借用時數）。</p>
+                        <!-- 修正: 體檢轉補休說明精確文字調整 -->
+                        <p>▪ 本月值班時數已達 162 小時，體檢時數另以轉補休辦理。(如何轉補休詳見Notion轉補休頁面)</p>
+                    </div>
+                </div>
+                <div class="border-t border-dashed border-slate-800 my-3"></div>
+                <div>
+                    <h3 class="text-sm font-bold text-cyber-yellow flex items-center gap-1.5 border-b border-slate-800/80 pb-2 mb-2">
+                        <i data-lucide="calculator" class="w-4 h-4"></i> 計算結果
+                    </h3>
+                    <div class="space-y-1.5 font-mono text-xs md:text-sm font-semibold">
+                        <p>區域一（本月超時值班費）：<span class="text-cyber-green">2,960 元</span></p>
+                        <p>區域二（補發上月跨本月值班費）：<span class="text-cyber-purple">888 元</span></p>
+                        <p class="text-cyber-yellow text-sm font-bold">應領總計：3,848 元</p>
+                        <p class="text-slate-500 text-[11px] font-normal">計算式：2,960 元 + 888 元 = 3,848 元</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 手機版滑動提示 -->
+            <div class="flex lg:hidden items-center justify-center gap-1 text-xs text-slate-400 mb-3 animate-pulse">
+                <i data-lucide="chevrons-left-right" class="w-4 h-4 text-cyber-blue"></i>
+                <span>可左右滑動檢視完整申報欄位</span>
+            </div>
+
+            <!-- 表格容器 -->
+            <div class="overflow-x-auto no-scrollbar rounded-xl border border-slate-800/80 bg-slate-950/60">
+                <table class="w-full text-left border-collapse min-w-[1300px]">
+                    <thead>
+                        <!-- 第一層：區塊合併標頭 -->
+                        <tr class="bg-slate-900/80 text-[10px] font-bold tracking-wider text-center border-b border-slate-800">
+                            <th colspan="2" class="p-1.5 border-r border-slate-800 text-slate-500">基本資料</th>
+                            <th colspan="8" class="p-1.5 border-r-[6px] border-double border-slate-600 text-cyan-400 bg-cyan-950/20">【區域一】當月值班與超時費計算區</th>
+                            <th colspan="4" class="p-1.5 border-r-2 border-slate-700 text-purple-400 bg-purple-950/20">【區域二】上月跨月補發計算區</th>
+                            <th class="p-1.5 border-r-2 border-slate-700 text-amber-400 bg-amber-950/10">應領總計</th>
+                            <th colspan="2" class="p-1.5 border-r-2 border-slate-700 text-blue-400 bg-blue-950/20">【區域三】差假登記區</th>
+                            <th colspan="3" class="p-1.5 text-emerald-400 bg-emerald-950/20">【區域四】法規安全與額度檢核區</th>
+                        </tr>
+                        <!-- 第二層：直書細部欄位標頭 -->
+                        <tr class="bg-slate-900/40 border-b border-slate-800 text-xs font-bold tracking-wider text-slate-300 text-center">
+                            <!-- 姓名 & 輪值內扣 -->
+                            <th onclick="selectCell('姓名')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-姓名">姓<br>名</th>
+                            <th onclick="selectCell('輪值內扣')" class="p-2 border-r-2 border-slate-700 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-輪值內扣">輪<br>值<br>內<br>扣</th>
+                            <!-- 區域一欄位 -->
+                            <th onclick="selectCell('總時數')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-總時數">總<br>時<br>數</th>
+                            <th onclick="selectCell('公假')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-公假">公<br>假<br>(併<br>計)</th>
+                            <th onclick="selectCell('本月跨月')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-本月跨月">本<br>月<br>跨<br>月</th>
+                            <th onclick="selectCell('值班合計')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-值班合計">值<br>班<br>合<br>計<br>時<br>數</th>
+                            <th onclick="selectCell('規定時數')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-規定時數">規<br>定<br>時<br>數</th>
+                            <th onclick="selectCell('超時時數')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-超時時數">超<br>時<br>值<br>班<br>時<br>數</th>
+                            <th onclick="selectCell('金額')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-金額">金<br>額<br>/<br>時</th>
+                            <!-- 區域一與區域二交界，雙線處理 -->
+                            <th onclick="selectCell('超時值班費金額')" class="p-2 border-r-[6px] border-double border-slate-500 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-超時值班費金額">超<br>時<br>值<br>班<br>費<br>金<br>額</th>
+                            <!-- 區域二欄位 -->
+                            <th onclick="selectCell('上月跨月')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-上月跨月">上<br>月<br>跨<br>月</th>
+                            <th onclick="selectCell('補扣上月跨本月借用時數')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-補扣上月跨本月借用時數">補<br>扣<br>上<br>月<br>跨<br>本<br>月<br>借<br>用<br>時<br>數</th>
+                            <th onclick="selectCell('上月金額')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-上月金額">金<br>額</th>
+                            <th onclick="selectCell('實補跨月金額')" class="p-2 border-r-2 border-slate-700 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-實補跨月金額">實<br>補<br>跨<br>月<br>金<br>額</th>
+                            <!-- 總計欄位 -->
+                            <th onclick="selectCell('總計')" class="p-2 border-r-2 border-slate-700 cursor-pointer hover:bg-slate-900 transition-colors text-white font-bold" id="th-總計">總<br>計</th>
+                            <!-- 區域三欄位 -->
+                            <th onclick="selectCell('公假內扣')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-公假內扣">公<br>假<br>內<br>扣</th>
+                            <th onclick="selectCell('請假時數')" class="p-2 border-r-2 border-slate-700 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-請假時數">請<br>假<br>時<br>數<br>(不<br>含<br>輪<br>值<br>內<br>扣)</th>
+                            <!-- 區域四欄位 -->
+                            <th onclick="selectCell('不可超過210')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-不可超過210">不<br>可<br>超<br>過<br>210</th>
+                            <th onclick="selectCell('時數滿足162')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-時數滿足162">時<br>數<br>是<br>否<br>滿<br>足<br>162</th>
+                            <th onclick="selectCell('錢滿足162')" class="p-2 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-錢滿足162">$<br>$<br>是<br>否<br>滿<br>足<br>162</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-slate-800/40 text-sm text-center bg-slate-950/20 hover:bg-slate-900/20 transition-colors text-white font-mono">
+                            <!-- 彭于晏資料列 -->
+                            <td onclick="selectCell('姓名')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200 whitespace-nowrap" id="td-姓名">彭于晏</td>
+                            <td onclick="selectCell('輪值內扣')" class="p-3 border-r-2 border-slate-700 cursor-pointer transition-all duration-200" id="td-輪值內扣">8</td>
+                            <td onclick="selectCell('總時數')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200 font-bold text-cyan-300" id="td-總時數">177</td>
+                            <td onclick="selectCell('公假')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-公假">3</td>
+                            <td onclick="selectCell('本月跨月')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-本月跨月">8</td>
+                            <td onclick="selectCell('值班合計')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-值班合計">172</td>
+                            <td onclick="selectCell('規定時數')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-規定時數">162</td>
+                            <td onclick="selectCell('超時時數')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200 text-amber-400" id="td-超時時數">10</td>
+                            <td onclick="selectCell('金額')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-金額">296</td>
+                            <td onclick="selectCell('超時值班費金額')" class="p-3 border-r-[6px] border-double border-slate-500 cursor-pointer transition-all duration-200 text-cyber-green" id="td-超時值班費金額">2,960</td>
+                            <td onclick="selectCell('上月跨月')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-上月跨月">8</td>
+                            <td onclick="selectCell('補扣上月跨本月借用時數')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-補扣上月跨本月借用時數">5</td>
+                            <td onclick="selectCell('上月金額')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-上月金額">-1,480</td>
+                            <td onclick="selectCell('實補跨月金額')" class="p-3 border-r-2 border-slate-700 cursor-pointer transition-all duration-200 text-cyber-purple" id="td-實補跨月金額">888</td>
+                            <td onclick="selectCell('總計')" class="p-3 border-r-2 border-slate-700 cursor-pointer transition-all duration-200 text-cyber-yellow font-bold" id="td-總計">3,848</td>
+                            <!-- 區域三：差假 -->
+                            <td onclick="selectCell('公假內扣')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-公假內扣">4</td>
+                            <td onclick="selectCell('請假時數')" class="p-3 border-r-2 border-slate-700 cursor-pointer transition-all duration-200" id="td-請假時數">0</td>
+                            <!-- 區域四檢核欄位 -->
+                            <td onclick="selectCell('不可超過210')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200 text-cyber-blue font-bold" id="td-不可超過210">184</td>
+                            <td onclick="selectCell('時數滿足162')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200 text-cyber-blue font-bold" id="td-時數滿足162">180</td>
+                            <td onclick="selectCell('錢滿足162')" class="p-3 cursor-pointer transition-all duration-200 text-cyber-blue font-bold" id="td-錢滿足162">172</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 說明與公式展示區 -->
+        <div class="bg-cyber-card border border-cyber-border rounded-2xl p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden" id="explanation-box">
+            
+            <!-- 未點擊時的預設說明 -->
+            <div id="default-helper" class="text-center py-8">
+                <div class="w-12 h-12 rounded-full bg-cyber-blue/10 border border-cyber-blue/30 flex items-center justify-center text-cyber-blue mx-auto mb-3 animate-bounce">
+                    <i data-lucide="info" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-base font-bold text-white mb-1">請點擊上方表格中任意一個儲存格</h3>
+                <p class="text-xs text-slate-400">
+                    點擊後此處將立即呈現該欄位的「專業公式定義」與「詳細申報實務說明」
+                </p>
+            </div>
+
+            <!-- 點擊後顯示的公式剖析 -->
+            <div id="active-helper" class="hidden space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-1.5 h-6 bg-cyber-blue rounded"></span>
+                        <h3 class="text-lg font-bold text-white" id="info-header-title">欄位名稱</h3>
+                    </div>
+                    <span class="text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded bg-slate-800 text-cyber-blue border border-slate-700" id="info-header-tag">
+                        法規公式
+                    </span>
+                </div>
+
+                <!-- 公式核心公式卡 -->
+                <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                    <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                        <i data-lucide="calculator" class="w-3.5 h-3.5"></i> 計算公式與定義
+                    </div>
+                    <div class="text-sm md:text-base font-bold text-slate-100 leading-relaxed font-mono whitespace-pre-line text-cyan-300" id="info-formula-text">
+                        正在載入公式...
+                    </div>
+                </div>
+
+                <!-- 實例背景與邏輯 -->
+                <div class="p-4 rounded-xl bg-slate-950/40 border border-slate-800/40">
+                    <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                        <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i> 實務作業背景與舉例
+                    </div>
+                    <p class="text-xs md:text-sm text-slate-300 leading-relaxed whitespace-pre-line" id="info-example-text">
+                        正在載入實例說明...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 頁尾 -->
+    <footer class="text-center mt-12 text-xs text-slate-600">
+        民用航空局飛航服務總臺 臺北機場管制臺 • 專用系統說明版
+    </footer>
+
+    <script>
+        const explanationData = {
+            "姓名": {
+                title: "姓名",
+                tag: "基本欄位",
+                formula: "同仁姓名",
+                example: "本表格之列出數據為模擬核算示範，方便管制臺同仁快速核對當月時數、跨月與超時值班費。"
+            },
+            "總時數": {
+                title: "總時數",
+                tag: "主要計算",
+                formula: "總時數 ＝ 差勤系統班表總時數 － 輪值內扣 (有班但臨時請假)",
+                example: "【範例對應】：\n本月差勤系統排定之班表總時數為 185 小時，當月請假 8 小時（列在輪值內扣），因此實得總時數為：\n185 － 8 ＝ 177 小時。"
+            },
+            "輪值內扣": {
+                title: "輪值內扣",
+                tag: "扣除項目",
+                formula: "輪值內扣 ＝ 班表有班但臨時請假時數",
+                example: "【範例對應】：\n同仁若在當月班表上有班，但因為生病或突發意外等因素無法到班而未實際值勤者，其請假時數必須列入輪值內扣予以減除。"
+            },
+            "公假內扣": {
+                title: "公假內扣",
+                tag: "扣除項目",
+                formula: "本月公假、差假內扣之時數總和",
+                example: "【範例說明】：\n如同仁因英檢、體檢等法定原因給予公假內扣之時數計入此欄位。"
+            },
+            "請假時數": {
+                title: "請假時數(不含輪值內扣)",
+                tag: "請假統計",
+                formula: "請假時數 ＝ 當月病假、事假、特休假等不含輪值內扣之請假時數總和",
+                example: "【範例說明】：\n同仁因生病、請事假、特休等因素請假，且該請假時數不屬於輪值內扣者之累計時數。"
+            },
+            "不可超過210": {
+                title: "不可超過 210",
+                tag: "安全檢核",
+                formula: "為確保飛航安全、提升航空站優質服務品質及保護重要交通運輸輪值人員之健康權，交通部民用航空局輪班輪休人員服勤實施要點規定，人員值班時數不得超過210小時\n檢核標準：值班合計時數 ≦ 210 小時\n時數＝總時數＋公假（併計）＋公假（內扣）＋差勤系統申請的加班\n注意：不扣除跨月時數",
+                example: "【範例說明】：\n帶入上方公式計算得：\n177 (總時數) ＋ 3 (公假併計) ＋ 4 (公假內扣) ＋ 0 ＝ 184 小時。\n因 184 ≦ 210 小時，符合法規安全上限。"
+            },
+            "時數滿足162": {
+                title: "時數是否滿足 162",
+                tag: "門檻檢核",
+                formula: "時數＝總時數＋公假（併計）＋差勤系統申請的加班\n上述時數不足<u>規定時數</u>時才會再加上以下時數\n＋輪值內扣＋公假（內扣）＋請假時數(不含輪值內扣)，因為後面 these 即使超過<u>規定時數</u>也不能領超時值班費\n▲超過規定時數之公假(內扣)請轉補休辦理",
+                example: "【範例說明】：\n帶入上方公式計算得：\n177 (總時數) ＋ 3 (公假併計) ＋ 0 ＝ 180 小時。\n因 180 ≧ 162 小時，已滿足規定時數門檻，不需再加計其他請假時數。"
+            },
+            "錢滿足162": {
+                title: "$$是否滿足 162",
+                tag: "核銷檢核",
+                formula: "時數 = 規定時數 可領本薪\n                       時數 > 規定時數 可額外領超時值班費(超時值班時數*時薪)\n時數 = 總時數＋公假（併計）＋差勤系統申請的加班－本月跨月\n上述時數不足<u>規定時數</u>時才會再＋輪值內扣＋公假（內扣）＋請假時數(不含輪值內扣)＋本月跨月，因為後面這些即使超過<u>規定時數</u>也不能領超時值班費",
+                example: "【範例說明】：\n帶入上方公式計算得：\n177 (總時數) ＋ 3 (公假併計) ＋ 0 － 8 (本月跨月) ＝ 172 小時。\n因 172 ≧ 162 小時，已滿足超時值班費申報門檻。"
+            },
+            "公假": {
+                title: "公假（併計）",
+                tag: "加計項目",
+                formula: "本月公假、差假併計之時數總和",
+                example: "併計（兼具公差性質）： 如教官團、航管作業研討會、至松山照證、參加會議等。\n\n併計（屬訓練講習）： 如地區性複訓、持續運作演練、教官複訓、航務熟悉等。"
+            },
+            "本月跨月": {
+                title: "本月跨月",
+                tag: "時間跨度",
+                formula: "本月跨月 ＝ 當月月底最後一天夜班，跨至下個月的時數",
+                example: "【舉例說明】：\n• 舉例一：上班時間 19:00 - 08:00，跨月時數為 8 小時。\n• 舉例二：上班時間 19:30 - 08:30，跨月時數為 9 小時。\n\n💡 重要說明：\n若因此扣除而導致不足「規定時數」時，可以將本月跨月時數挪至本月使用，以滿足規定時數，但不可補到超過規定時數而多領超時值班費。"
+            },
+            "值班合計": {
+                title: "值班合計時數",
+                tag: "門檻依據",
+                formula: "值班合計時數 ＝ 總時數 ＋ 公假（併計） － 本月跨月",
+                example: "【範例對應】：\n帶入上方公式計算得：\n177 (總時數) ＋ 3 (公假) － 8 (本月跨月) ＝ 172 小時。"
+            },
+            "規定時數": {
+                title: "規定時數",
+                tag: "法定基準",
+                formula: "規定時數 ＝ 固定為 162 小時 (正常月份)",
+                example: "⚠️ 特殊破月規則：\n若當月在本管制臺之在職天數不滿一個月（破月），則依天數比例計算。\n【範例舉例】：\n如同仁進階訓練時間為 1/12 至 4/21，其於 4/22 才回到管制臺。4 月份在管制臺天數為 9 天 (4/22 - 4/30)，則 4 月規定時數調整為：\n162 × 9(天) / 30(天) ＝ 48.6 小時。"
+            },
+            "超時時數": {
+                title: "超時值班時數",
+                tag: "申報時數",
+                formula: "超時值班時數 ＝ 值班合計時數 － 規定時數",
+                example: "【範例對應】：\n本範例同仁之值班合計時數為 172 小時，扣除規定時數 162 小時：\n172 － 162 ＝ 10 小時 (此時數用以計算當月超時值班費)。"
+            },
+            "金額": {
+                title: "金額 / 時（時薪）",
+                tag: "費率標準",
+                formula: "時薪 ＝ (月俸額 ＋ 專業加給) / 240",
+                example: "若為薦任第六職等本俸一級之管制員：\n時薪 ＝ (月俸額 29,270 ＋ 專業加給 41,770) / 240 ＝ 296 元。"
+            },
+            "超時值班費金額": {
+                title: "超時值班費金額",
+                tag: "撥付金額",
+                formula: "超時值班費金額 ＝ 超時值班時數 × (金額/時)",
+                example: "【範例對應】：\n本範例同仁之超時值班時數為 10 小時，乘以時薪 296\n10 x 296 ＝ 2,960 元"
+            },
+            "上月跨月": {
+                title: "上月跨月",
+                tag: "前期結轉",
+                formula: "上月跨月 ＝ 上月份跨至本月的時數",
+                example: "代表上個月月底最後一班跨入本月的夜班時數。時數算在上月，本月補發金額。"
+            },
+            "補扣上月跨本月借用時數": {
+                title: "補扣上月跨本月借用時數",
+                tag: "調劑補正",
+                formula: "若上月跨月時數已在上月挪用，則本月會扣回已使用的時數。",
+                example: "【範例對應】：\n假設上個月先借用了跨月5小時滿足規定時數162，這個月必須扣掉已借用時數5"
+            },
+            "上月金額": {
+                title: "金額",
+                tag: "前期費率",
+                formula: "扣除上個月先借用的 跨月時數 x 時薪 之金額",
+                example: "【範例對應】：\n上個月先借用了跨月5小時 x 時薪296=-1,480"
+            },
+            "實補跨月金額": {
+                title: "實補跨月金額",
+                tag: "補發金額",
+                formula: "(跨月時數 - 補扣上月跨本月借用時數) x 時薪",
+                example: "【範例對應】：\n(8 (上月跨月) － 5 (補扣上月跨本月借用時數)) × 296 (時薪) ＝ 888 元。"
+            },
+            "總計": {
+                title: "總計金額",
+                tag: "實領金額",
+                formula: "總計 ＝ 超時值班費金額 ＋ 實補跨月金額",
+                example: "【範例對應】：\n2,960 (超時值班費金額) ＋ 888 (實補跨月金額) ＝ 3,848 元。"
+            }
+        };
+
+        // 初始化圖標
+        document.addEventListener("DOMContentLoaded", function() {
+            lucide.createIcons();
+        });
+
+        // 進入第二階段確認畫面
+        function goToStep2() {
+            document.getElementById("overlay-step-1").classList.add("hidden");
+            document.getElementById("overlay-step-2").classList.remove("hidden");
+        }
+
+        // 關閉前置說明頁面
+        function dismissOverlay() {
+            const overlay = document.getElementById("welcome-overlay");
+            if (overlay) {
+                overlay.classList.add("opacity-0");
+                overlay.classList.add("pointer-events-none");
+                setTimeout(() => {
+                    overlay.remove();
+                }, 500);
+            }
+        }
+
+        // 選擇欄位並高亮
+        function selectCell(fieldKey) {
+            // 1. 清理全表所有儲存格的高亮
+            document.querySelectorAll("th, td").forEach(el => {
+                el.classList.remove("cell-highlight");
+            });
+
+            // 2. 獲取當前點擊的 table header (th) 與 table data (td) 元素
+            const targetTh = document.getElementById(`th-${fieldKey}`);
+            const targetTd = document.getElementById(`td-${fieldKey}`);
+
+            if (targetTh) targetTh.classList.add("cell-highlight");
+            if (targetTd) targetTd.classList.add("cell-highlight");
+
+            // 3. 切換說明顯示區域
+            document.getElementById("default-helper").classList.add("hidden");
+            const activeHelper = document.getElementById("active-helper");
+            activeHelper.classList.remove("hidden");
+
+            // 4. 動態填充說明
+            let info = explanationData[fieldKey];
+            if (!info && fieldKey === "超時值班費") {
+                info = explanationData["超時值班費金額"];
+            }
+            if (info) {
+                document.getElementById("info-header-title").innerText = info.title;
+                document.getElementById("info-header-tag").innerText = info.tag;
+                document.getElementById("info-formula-text").innerHTML = info.formula;
+                document.getElementById("info-example-text").innerHTML = info.example.replace(/\n/g, '<br>');
+                
+                // 網頁自動向下滾動至說明板塊
+                document.getElementById("explanation-box").scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    </script>
+</body>
+</html>
