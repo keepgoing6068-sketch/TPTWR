@@ -217,8 +217,7 @@
                         <p>▪ 至航醫中心體檢 4 小時（公假內扣）。</p>
                         <p>▪ 月底值夜班 13 小時，其中 8 小時跨至次月（本月跨月）。</p>
                         <p>▪ 上月底亦有夜班跨至本月 8 小時（上月跨月）。</p>
-                        <p>▪ 另因上月扣除跨月時數後，總工時未達基本時數 162 小時，因此已預先借用上月跨月時數 5 小時補足. 故本月計算超時值班費時，須扣除該 5 小時借用時數（補扣上月跨本月借用時數）。</p>
-                        <!-- 修正: 體檢轉補休說明精確文字調整 -->
+                        <p>▪ 另因上月扣除跨月時數後，總工時未達基本時數 162 小時，因此已預先借用上月跨月時數 5 小時補足。故本月計算超時值班費時，須扣除該 5 小時借用時數（補扣上月跨本月借用時數）。</p>
                         <p>▪ 本月值班時數已達 162 小時，體檢時數另以轉補休辦理。(如何轉補休詳見Notion轉補休頁面)</p>
                     </div>
                 </div>
@@ -246,10 +245,10 @@
             <div class="overflow-x-auto no-scrollbar rounded-xl border border-slate-800/80 bg-slate-950/60">
                 <table class="w-full text-left border-collapse min-w-[1300px]">
                     <thead>
-                        <!-- 第一層：區塊合併標頭 -->
+                        <!-- 第一層：區塊合併標頭 (區域一 colspan 調整為 9 以對齊新插入的欄位) -->
                         <tr class="bg-slate-900/80 text-[10px] font-bold tracking-wider text-center border-b border-slate-800">
                             <th colspan="2" class="p-1.5 border-r border-slate-800 text-slate-500">基本資料</th>
-                            <th colspan="8" class="p-1.5 border-r-[6px] border-double border-slate-600 text-cyan-400 bg-cyan-950/20">【區域一】當月值班與超時費計算區</th>
+                            <th colspan="9" class="p-1.5 border-r-[6px] border-double border-slate-600 text-cyan-400 bg-cyan-950/20">【區域一】當月值班與超時費計算區</th>
                             <th colspan="4" class="p-1.5 border-r-2 border-slate-700 text-purple-400 bg-purple-950/20">【區域二】上月跨月補發計算區</th>
                             <th class="p-1.5 border-r-2 border-slate-700 text-amber-400 bg-amber-950/10">應領總計</th>
                             <th colspan="2" class="p-1.5 border-r-2 border-slate-700 text-blue-400 bg-blue-950/20">【區域三】差假登記區</th>
@@ -263,6 +262,8 @@
                             <!-- 區域一欄位 -->
                             <th onclick="selectCell('總時數')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-總時數">總<br>時<br>數</th>
                             <th onclick="selectCell('公假')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-公假">公<br>假<br>(併<br>計)</th>
+                            <!-- 修正: 插入差勤加班單欄位 -->
+                            <th onclick="selectCell('差勤加班單')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-差勤加班單">差<br>勤<br>加<br>班<br>單<br>(含<br>飛<br>安)</th>
                             <th onclick="selectCell('本月跨月')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-本月跨月">本<br>月<br>跨<br>月</th>
                             <th onclick="selectCell('值班合計')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-值班合計">值<br>班<br>合<br>計<br>時<br>數</th>
                             <th onclick="selectCell('規定時數')" class="p-2 border-r border-slate-800 cursor-pointer hover:bg-slate-900 transition-colors text-white" id="th-規定時數">規<br>定<br>時<br>數</th>
@@ -293,6 +294,8 @@
                             <td onclick="selectCell('輪值內扣')" class="p-3 border-r-2 border-slate-700 cursor-pointer transition-all duration-200" id="td-輪值內扣">8</td>
                             <td onclick="selectCell('總時數')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200 font-bold text-cyan-300" id="td-總時數">177</td>
                             <td onclick="selectCell('公假')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-公假">3</td>
+                            <!-- 修正: 插入差勤加班單數值為 0 -->
+                            <td onclick="selectCell('差勤加班單')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-差勤加班單">0</td>
                             <td onclick="selectCell('本月跨月')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-本月跨月">8</td>
                             <td onclick="selectCell('值班合計')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-值班合計">172</td>
                             <td onclick="selectCell('規定時數')" class="p-3 border-r border-slate-800 cursor-pointer transition-all duration-200" id="td-規定時數">162</td>
@@ -377,7 +380,7 @@
                 title: "姓名",
                 tag: "基本欄位",
                 formula: "同仁姓名",
-                example: "本表格之列出數據為模擬核算示範，方便管制臺同仁快速核對當月時數、跨月與超時值班費。"
+                example: "本表格之列出數據為模擬核算示範，方便管制臺同仁快速核對當月時數、跨月與超時值班費."
             },
             "總時數": {
                 title: "總時數",
@@ -426,6 +429,13 @@
                 tag: "加計項目",
                 formula: "本月公假、差假併計之時數總和",
                 example: "併計（兼具公差性質）： 如教官團、航管作業研討會、至松山照證、參加會議等。\n\n併計（屬訓練講習）： 如地區性複訓、持續運作演練、教官複訓、航務熟悉等。"
+            },
+            // 新增: 差勤加班單欄位點擊說明
+            "差勤加班單": {
+                title: "差勤加班單（含飛安）",
+                tag: "加班統計",
+                formula: "差勤系統申報並核准之加班時數（包含飛安管制加班）",
+                example: "如上版或臨時支援班務等，請打卡並上差勤系統申報加班單（延長值班）\n【範例對應】：\n本月同仁之加班單累計時數為 0 小時。"
             },
             "本月跨月": {
                 title: "本月跨月",
